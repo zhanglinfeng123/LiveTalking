@@ -1,5 +1,5 @@
 # server.py
-from flask import Flask, request, jsonify
+from flask import Flask, request,render_template, jsonify
 from flask_sockets import Sockets
 import base64
 import time
@@ -24,7 +24,7 @@ import asyncio
 import edge_tts
 
 app = Flask(__name__)
-sockets = Sockets(app)
+#sockets = Sockets(app)
 global nerfreal
 
 
@@ -41,32 +41,70 @@ async def main(voicename: str, text: str, render):
 
 
 def txt_to_audio(text_):
-    audio_list = []
-    #audio_path = 'data/audio/aud_0.wav'
     voicename = "zh-CN-YunxiaNeural"
     text = text_
     t = time.time()
     asyncio.get_event_loop().run_until_complete(main(voicename,text,nerfreal))
     print(f'-------tts time:{time.time()-t:.4f}s')
     
-@sockets.route('/humanecho')
-def echo_socket(ws):
-    # 获取WebSocket对象
-    #ws = request.environ.get('wsgi.websocket')
-    # 如果没有获取到，返回错误信息
-    if not ws:
-        print('未建立连接！')
-        return 'Please use WebSocket'
-    # 否则，循环接收和发送消息
-    else:
-        print('建立连接！')
-        while True:
-            message = ws.receive()           
+# @sockets.route('/humanecho')
+# def echo_socket(ws):
+#     # 获取WebSocket对象
+#     #ws = request.environ.get('wsgi.websocket')
+#     # 如果没有获取到，返回错误信息
+#     if not ws:
+#         print('未建立连接！')
+#         return 'Please use WebSocket'
+#     # 否则，循环接收和发送消息
+#     else:
+#         print('建立连接！')
+#         while True:
+#             message = ws.receive()           
             
-            if len(message)==0:
-                return '输入信息为空'
-            else:                                
-                txt_to_audio(message)                       
+#             if len(message)==0:
+#                 return '输入信息为空'
+#             else:                                
+#                 txt_to_audio(message) 
+
+@app.route('/echo')
+def page_echo():
+    return render_template('echo.html')
+
+@app.route('/chat')
+def page_chat():
+    return render_template('chat.html')
+
+
+@app.route('/human_echo', methods=['POST'])
+def human_echo():
+    data = request.get_json()
+    message = data['message']
+
+
+    if len(message)>0:
+        txt_to_audio(message) 
+
+    return {
+        "code": 200,
+        "result": {
+        },
+    }
+
+@app.route('/human_chat', methods=['POST'])
+def human_chat():
+    data = request.get_json()
+    message = data['message']
+
+    if len(message)>0:
+        answer = llm(message)
+        txt_to_audio(answer) 
+
+    return {
+        "code": 200,
+        "result": {
+            "answer": answer,
+        },
+    }                      
 
 def render():
     nerfreal.render()                  
@@ -224,7 +262,7 @@ if __name__ == '__main__':
 
     #############################################################################
     print('start websocket server')
-    server = pywsgi.WSGIServer(('0.0.0.0', 8000), app, handler_class=WebSocketHandler)
+    server = pywsgi.WSGIServer(('0.0.0.0', 8000), app)  #, handler_class=WebSocketHandler
     server.serve_forever()
     
     

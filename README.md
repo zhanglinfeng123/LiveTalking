@@ -44,23 +44,15 @@ export HF_ENDPOINT=https://hf-mirror.com
 运行成功后，用vlc访问rtmp://serverip/live/livestream
 
 ### 2.3 网页端数字人播报输入文字
-安装并启动nginx
-```
-apt install nginx
-nginx
-```
-修改echo.html中websocket和视频播放地址，将serverip替换成实际服务器ip  
-然后将echo.html和mpegts-1.7.3.min.js拷到/var/www/html下
 
-
-用浏览器打开http://serverip/echo.html, 在文本框输入任意文字，提交。数字人播报该段文字
+用浏览器打开http://serverip:8000/echo, 在文本框输入任意文字，提交。数字人播报该段文字
   
 ## 3. Docker Run  
 不需要第1步的安装，直接运行。
 ```
 docker run --gpus all -it --network=host --rm  registry.cn-hangzhou.aliyuncs.com/lipku/nerfstream:v1.3
 ```
-srs和nginx的运行同2.1和2.3
+srs的运行同2.1
 
 ## 4. Data flow
 ![](/assets/dataflow.png)
